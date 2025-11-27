@@ -30,6 +30,8 @@ def index():
 
             try:
                 qa_chain = create_qa_chain()
+                if qa_chain is None:
+                    raise ValueError("QA chain was not created. Please check your retriever setup.")
                 response = qa_chain.invoke({"query" : user_input})
                 result = response.get("result" , "No response")
 
