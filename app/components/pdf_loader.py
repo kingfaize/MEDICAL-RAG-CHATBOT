@@ -1,6 +1,6 @@
 import os
 from langchain_community.document_loaders import DirectoryLoader,PyPDFLoader
-from langchain.text_splitter import RecursiveCharacterTextSplitter
+from langchain_text_splitters import RecursiveCharacterTextSplitter
 
 from app.common.logger import get_logger
 from app.common.custom_exception import CustomException
@@ -31,8 +31,26 @@ def load_pdf_files():
         error_message = CustomException("Failed to load PDF" , e)
         logger.error(str(error_message))
         return []
-    
 
+        # Wrapper for compatibility with build_vector_store.py
+        def load_documents(path=None):
+            # Use provided path or default to config DATA_PATH
+            if path is None:
+                return load_pdf_files()
+            # Temporarily override DATA_PATH for this call
+            from app.config import config
+            original_data_path = config.DATA_PATH
+            config.DATA_PATH = path
+def load_documents(path=None):
+    # Use provided path or default to config DATA_PATH
+    from app.config import config
+    if path is None:
+        return load_pdf_files()
+    original_data_path = config.DATA_PATH
+    config.DATA_PATH = path
+    docs = load_pdf_files()
+    config.DATA_PATH = original_data_path
+    return docs
 def create_text_chunks(documents):
     try:
         if not documents:

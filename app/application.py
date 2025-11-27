@@ -1,10 +1,16 @@
 from flask import Flask,render_template,request,session,redirect,url_for
-from app.components.retriever import create_qa_chain
+from app.components.retriever import retrieve_context
+
 from dotenv import load_dotenv
 import os
+import pathlib
 
-load_dotenv()
+import os
+# Robustly load .env from project root
+
+load_dotenv(os.path.join(os.path.dirname(os.path.dirname(__file__)), '.env'))
 HF_TOKEN = os.environ.get("HF_TOKEN")
+# print("HF_TOKEN loaded:", HF_TOKEN)
 
 app = Flask(__name__)
 app.secret_key = os.urandom(24)
@@ -29,15 +35,10 @@ def index():
             session["messages"] = messages
 
             try:
-                qa_chain = create_qa_chain()
-                if qa_chain is None:
-                    raise ValueError("QA chain was not created. Please check your retriever setup.")
-                response = qa_chain.invoke({"query" : user_input})
-                result = response.get("result" , "No response")
-
+                # Use the agent-based RAG retrieval tool
+                result = retrieve_context.invoke(user_input)
                 messages.append({"role" : "assistant" , "content" : result})
                 session["messages"] = messages
-
             except Exception as e:
                 error_msg = f"Error : {str(e)}"
                 return render_template("index.html" , messages = session["messages"] , error = error_msg)
@@ -52,6 +53,7 @@ def clear():
 
 if __name__=="__main__":
     app.run(host="0.0.0.0" , port=5000 , debug=False , use_reloader = False)
+
 
 
 

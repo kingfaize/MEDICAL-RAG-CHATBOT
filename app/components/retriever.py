@@ -1,10 +1,11 @@
-from langchain.chains import RetrievalQA
+from langchain.tools import tool
 from langchain_core.prompts import PromptTemplate
+import os
 
 from app.components.llm import load_llm
 from app.components.vector_store import load_vector_store
 
-from app.config.config import HUGGINGFACE_REPO_ID,HF_TOKEN
+from app.config.config import HUGGINGFACE_REPO_ID
 from app.common.logger import get_logger
 from app.common.custom_exception import CustomException
 
@@ -23,35 +24,38 @@ Answer:
 """
 
 def set_custom_prompt():
-    return PromptTemplate(template=CUSTOM_PROMPT_TEMPLATE,input_variables=["context" , "question"])
+    return PromptTemplate.from_template(CUSTOM_PROMPT_TEMPLATE)
 
-def create_qa_chain():
-    try:
-        logger.info("Loading vector store for context")
+
+# Agent-based RAG pattern
+db = None
+llm = None
+
+def setup_rag_components():
+    global db, llm
+    if db is None:
         db = load_vector_store()
+    hf_token = os.environ.get("HF_TOKEN")
+    if hf_token is None:
+        raise CustomException("HF_TOKEN environment variable is not set.")
+    if llm is None:
+        llm = load_llm(huggingface_repo_id=HUGGINGFACE_REPO_ID, hf_token=hf_token)
+    if db is None:
+        raise CustomException("Vector store not present or empty")
+    if llm is None:
+        raise CustomException("LLM not loaded")
+    return db, llm
 
-        if db is None:
-            raise CustomException("Vector store not present or empty")
-
-        llm = load_llm(huggingface_repo_id=HUGGINGFACE_REPO_ID , hf_token=HF_TOKEN )
-
-        if llm is None:
-            raise CustomException("LLM not loaded")
-        
-        qa_chain = RetrievalQA.from_chain_type(
-            llm=llm,
-            chain_type="stuff",
-            retriever = db.as_retriever(search_kwargs={'k':1}),
-            return_source_documents=False,
-            chain_type_kwargs={'prompt': set_custom_prompt()}
-        )
-
-        logger.info("Sucesfully created the QA chain")
-        return qa_chain
-    
-    except Exception as e:
-        error_message = CustomException("Failed to make a QA chain", e)
-        logger.error(str(error_message))
+@tool("retrieve_context", response_format="content_and_artifact")
+def retrieve_context(query: str):
+    """Retrieve information to help answer a query."""
+    db, llm = setup_rag_components()
+    retriever = db.as_retriever(search_kwargs={'k':2})
+    retrieved_docs = retriever.invoke(query)
+    context = "\n\n".join(doc.page_content for doc in retrieved_docs)
+    prompt = set_custom_prompt().format(context=context, question=query)
+    answer = llm.invoke([{"role": "user", "content": prompt}])
+    return answer
 
 
 

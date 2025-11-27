@@ -1,25 +1,29 @@
 from langchain_huggingface import HuggingFaceEndpoint
 from app.config.config import HF_TOKEN,HUGGINGFACE_REPO_ID
+from typing import Optional
 
 from app.common.logger import get_logger
 from app.common.custom_exception import CustomException
 
 logger = get_logger(__name__)
 
-def load_llm(huggingface_repo_id: str = HUGGINGFACE_REPO_ID , hf_token:str = HF_TOKEN):
+def load_llm(huggingface_repo_id: str = HUGGINGFACE_REPO_ID, hf_token: Optional[str] = None):
     try:
         logger.info("Loading LLM from HuggingFace")
-
+        # Use .env token if not provided
+        if hf_token is None:
+            from app.config.config import HF_TOKEN as ENV_HF_TOKEN
+            hf_token = ENV_HF_TOKEN
+        if not hf_token:
+            raise CustomException("HF_TOKEN environment variable is not set.")
         llm = HuggingFaceEndpoint(
-            repo_id=huggingface_repo_id,
+            model=huggingface_repo_id,
             huggingfacehub_api_token=hf_token,
+            task="conversational",
             temperature=0.3,
-            max_new_tokens=256,
-            return_full_text=False,
+            max_new_tokens=256
         )
-
         logger.info("LLM loaded sucesfully...")
-
         return llm
     
     except Exception as e:

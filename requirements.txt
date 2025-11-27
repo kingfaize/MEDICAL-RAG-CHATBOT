@@ -6,3 +6,4 @@ pypdf
 huggingface_hub
 flask
 python-dotenv
+ pydantic>=2.0.0

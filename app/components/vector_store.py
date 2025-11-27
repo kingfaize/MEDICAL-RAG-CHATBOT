@@ -33,7 +33,12 @@ def save_vector_store(text_chunks):
         if not text_chunks:
             raise CustomException("No chunks were found..")
         
-        logger.info("Generating your new vectorstore")
+            logger.info("Generating your new vectorstore")
+
+            # Ensure the vectorstore directory exists
+            vectorstore_dir = os.path.dirname(DB_FAISS_PATH)
+            if not os.path.exists(vectorstore_dir):
+                os.makedirs(vectorstore_dir)
 
         embedding_model = get_embedding_model()
 
