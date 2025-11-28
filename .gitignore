@@ -1,4 +1,27 @@
+# Python cache and environment
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
 venv/
-logs/
-RAG_Medcal_Chatbot.egg-info/
+
+# Environment variables
 .env
+
+# Logs
+logs/
+*.log
+
+# Vectorstore files
+vectorstore/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Jupyter and notebook files
+.ipynb_checkpoints/
+*.ipynb
+
+# Other
+*.sqlite3

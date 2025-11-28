@@ -10,18 +10,13 @@ logger = get_logger(__name__)
 
 def process_and_store_pdfs():
     try:
-        logger.info("MAking the vectorstore....")
-        
+        logger.info("Making the vectorstore for OpenAI embeddings...")
         documents = load_pdf_files()
-
         text_chunks = create_text_chunks(documents)
-
         save_vector_store(text_chunks)
-
-        logger.info("Vectorstore created sucesfully....")
-
+        logger.info("Vectorstore for OpenAI created successfully....")
     except Exception as e:
-        error_message = CustomException("Faialedd to create vectorstore",e)
+        error_message = CustomException("Failed to create vectorstore for OpenAI", e)
         logger.error(str(error_message))
 
 

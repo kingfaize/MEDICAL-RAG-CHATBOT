@@ -135,7 +135,9 @@
             {% endfor %}
         </div>
 
+
         <form method="post" action="{{ url_for('index') }}">
+            <!-- Model Provider selection removed; only HuggingFace supported -->
             <textarea name="prompt" placeholder="Ask a medical question..." required></textarea>
             <br />
             <button type="submit">Send</button>

@@ -9,8 +9,9 @@ import os
 # Robustly load .env from project root
 
 load_dotenv(os.path.join(os.path.dirname(os.path.dirname(__file__)), '.env'))
-HF_TOKEN = os.environ.get("HF_TOKEN")
-# print("HF_TOKEN loaded:", HF_TOKEN)
+OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY")
+print("OPENAI_API_KEY loaded:", OPENAI_API_KEY)
+## OpenAI only; HuggingFace deprecated
 
 app = Flask(__name__)
 app.secret_key = os.urandom(24)
@@ -28,21 +29,35 @@ def index():
 
     if request.method=="POST":
         user_input = request.form.get("prompt")
+        provider = "openai"  # Only OpenAI supported
 
         if user_input:
             messages = session["messages"]
             messages.append({"role" : "user" , "content":user_input})
             session["messages"] = messages
 
+            # Aggregate chat history for context
+            chat_history = ""
+            for msg in messages:
+                if msg["role"] == "user":
+                    chat_history += f"User: {msg['content']}\n"
+                elif msg["role"] == "assistant":
+                    chat_history += f"Assistant: {msg['content']}\n"
+
+            import traceback
             try:
-                # Use the agent-based RAG retrieval tool
-                result = retrieve_context.invoke(user_input)
+                # Pass both user_input and chat_history
+                result = retrieve_context.invoke({"query": user_input, "chat_history": chat_history})
                 messages.append({"role" : "assistant" , "content" : result})
                 session["messages"] = messages
             except Exception as e:
-                error_msg = f"Error : {str(e)}"
+                tb = traceback.format_exc()
+                error_type = type(e).__name__
+                error_msg = f"Error: {error_type}: {str(e)}\nTraceback:\n{tb}"
+                from app.common.logger import get_logger
+                logger = get_logger(__name__)
+                logger.error(f"Frontend error: {error_msg}")
                 return render_template("index.html" , messages = session["messages"] , error = error_msg)
-            
         return redirect(url_for("index"))
     return render_template("index.html" , messages=session.get("messages" , []))
 
