@@ -161,8 +161,18 @@
             <form method="post" action="{{ url_for('index') }}">
                 <textarea name="prompt" placeholder="Ask a medical question..." required></textarea>
                 <br />
+                <label for="temperature" style="font-weight:600; color:#2d5c8a; margin-bottom:0.5rem;">Temperature: <span id="temp-value">1.0</span></label>
+                <input type="range" id="temperature" name="temperature" min="0" max="2" step="1" value="1" style="width:200px;">
+                <br />
                 <button type="submit">Send</button>
             </form>
+            <script>
+                const tempSlider = document.getElementById('temperature');
+                const tempValue = document.getElementById('temp-value');
+                tempSlider.addEventListener('input', function() {
+                    tempValue.textContent = parseInt(tempSlider.value);
+                });
+            </script>
             <form method="get" action="{{ url_for('clear') }}">
                 <button type="submit" class="clear-btn">Clear Chat</button>
             </form>

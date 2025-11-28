@@ -29,6 +29,11 @@ def index():
 
     if request.method=="POST":
         user_input = request.form.get("prompt")
+        temperature = request.form.get("temperature", "1.0")
+        try:
+            temperature = float(temperature)
+        except Exception:
+            temperature = 1.0
         provider = "openai"  # Only OpenAI supported
 
         if user_input:
@@ -46,8 +51,11 @@ def index():
 
             import traceback
             try:
-                # Pass both user_input and chat_history
-                result = retrieve_context.invoke({"query": user_input, "chat_history": chat_history})
+                # Pass user_input, chat_history, and temperature
+                result = retrieve_context.invoke({"query": user_input, "chat_history": chat_history, "temperature": temperature})
+                # Always use the cleaned string response
+                if isinstance(result, tuple):
+                    result = result[0]
                 messages.append({"role" : "assistant" , "content" : result})
                 session["messages"] = messages
             except Exception as e:
