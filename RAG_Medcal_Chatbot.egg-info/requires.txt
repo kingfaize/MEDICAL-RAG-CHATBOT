@@ -1,8 +1,13 @@
+python_version
 langchain
+langchain-openai
 langchain_community
-langchain_huggingface
-faiss-cpu
-pypdf
-huggingface_hub
+openai
 flask
 python-dotenv
+faiss-cpu
+pypdf
+pydantic
+sentence-transformers
+torch
+transformers

@@ -16,6 +16,8 @@ app/components/embeddings.py
 app/components/llm.py
 app/components/pdf_loader.py
 app/components/retriever.py
+app/components/self_reflection.py
 app/components/vector_store.py
 app/config/__init__.py
 app/config/config.py
+tests/test_medical_rag_chatbot.py

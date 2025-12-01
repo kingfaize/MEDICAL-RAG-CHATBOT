@@ -51,12 +51,11 @@ def retrieve_context(query: str):
     if isinstance(query, dict):
         user_query = query.get('query', '')
         chat_history = query.get('chat_history', '')
-        temperature = query.get('temperature', 1.0)
     else:
         user_query = query
         chat_history = ''
-        temperature = 1.0
-    # Always reload LLM with the requested temperature
+    # Always reload LLM with default temperature 1
+    temperature = 1.0
     from app.components.llm import load_llm
     db = load_vector_store()
     if db is None:
@@ -79,39 +78,16 @@ def retrieve_context(query: str):
         full_prompt = set_custom_prompt().format(context=context, question=user_query)
     answer = llm.invoke(full_prompt)
 
-    # Hallucination self-reflection
-    from app.components.self_reflection import hallucination_self_reflection
-    score, explanation = hallucination_self_reflection(llm, context, user_query, answer.content if hasattr(answer, 'content') else str(answer))
-
-    # Convert hallucination score to Yes/No/N/A
-    if score is None:
-        score_display = 'N/A'
-    elif score == 0:
-        score_display = 'No'
-    else:
-        score_display = 'Yes'
-    # Ensure answer_text is a string
+    # Only return the answer string, no hallucination logic
     answer_text = answer.content if hasattr(answer, 'content') else str(answer)
     if not isinstance(answer_text, str):
         answer_text = str(answer_text)
-    # Remove backend metadata after explanation
+    # Remove backend metadata
     import re
-    # Find start of metadata
     meta_match = re.search(r'(additional_kwargs|response_metadata|usage_metadata|id=)', answer_text)
     if meta_match:
         answer_text = answer_text[:meta_match.start()].strip()
-    # Section 1: main answer (before Hallucination)
-    main_answer = answer_text.split('Hallucination:')[0].strip()
-    # Section 2: Hallucination (Yes/No/N/A)
-    hallucination_section = f"Hallucination: {score_display}"
-    # Section 3: Explanation (after 'Explanation:')
-    explanation_section = ''
-    if 'Explanation:' in answer_text:
-        explanation_section = answer_text.split('Explanation:')[1].strip()
-        explanation_section = f"Explanation: {explanation_section}"
-    # Compose display
-    cleaned_display = f"{main_answer}\n\n{hallucination_section}\n\n{explanation_section}"
-    return cleaned_display, None
+    return answer_text, None
 
 
 

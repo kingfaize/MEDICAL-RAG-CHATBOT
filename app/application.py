@@ -10,7 +10,6 @@ import os
 
 load_dotenv(os.path.join(os.path.dirname(os.path.dirname(__file__)), '.env'))
 OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY")
-print("OPENAI_API_KEY loaded:", OPENAI_API_KEY)
 ## OpenAI only; HuggingFace deprecated
 
 app = Flask(__name__)
@@ -29,11 +28,6 @@ def index():
 
     if request.method=="POST":
         user_input = request.form.get("prompt")
-        temperature = request.form.get("temperature", "1.0")
-        try:
-            temperature = float(temperature)
-        except Exception:
-            temperature = 1.0
         provider = "openai"  # Only OpenAI supported
 
         if user_input:
@@ -51,8 +45,8 @@ def index():
 
             import traceback
             try:
-                # Pass user_input, chat_history, and temperature
-                result = retrieve_context.invoke({"query": user_input, "chat_history": chat_history, "temperature": temperature})
+                # Pass user_input and chat_history only, temperature fixed to 1
+                result = retrieve_context.invoke({"query": user_input, "chat_history": chat_history})
                 # Always use the cleaned string response
                 if isinstance(result, tuple):
                     result = result[0]
